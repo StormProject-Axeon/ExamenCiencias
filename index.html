@@ -197,7 +197,7 @@
         function compareAnswers(userAnswer, correctAnswer) {
             if (!userAnswer) return { score: 0, status: 'Incorrecto' };
             const normalize = str => str.toLowerCase()
-                .replace(/[¹²³⁴⁵⁶⁷⁸⁹⁰]/g, m => '1234567890'['¹²³⁴⁵⁶⁷⁸⁹⁰'.indexOf(m)])
+                .replace(/[¹²³⁴⁵⁶⁷⁸perspective: 9⁰]/g, m => '1234567890'['¹²³⁴⁵⁶⁷⁸⁹⁰'.indexOf(m)])
                 .replace(/[\[\]]/g, '') // Quitar corchetes
                 .replace(/\s+/g, ' ')
                 .trim();
@@ -237,8 +237,8 @@
                 if (!user) {
                     user = { name: nameInput, score: 0, answers: {}, failed: false };
                     users.push(user);
+                    localStorage.setItem('users', JSON.stringify(users));
                 }
-                localStorage.setItem('users', JSON.stringify(users));
                 localStorage.setItem('userName', nameInput);
                 localStorage.setItem('userScore', '0');
                 userNameDisplay.textContent = nameInput;
@@ -297,7 +297,7 @@
             // Guardar datos
             const name = localStorage.getItem('userName');
             localStorage.setItem('userScore', score);
-            updateUserData(name, score, answers, false);
+            updateUserData(name, score, answers, score < 6); // Considerar reprobado si score < 6
             localStorage.removeItem('examFailed');
 
             showResultScreen(true, auto);
@@ -310,8 +310,11 @@
                 users[userIndex].score = score;
                 users[userIndex].answers = answers;
                 users[userIndex].failed = failed;
-                localStorage.setItem('users', JSON.stringify(users));
+            } else {
+                users.push({ name, score, answers, failed });
             }
+ 업데이트UserData(name, score, answers, failed);
+            localStorage.setItem('users', JSON.stringify(users));
         }
 
         function showResultScreen(success, expired = false) {
