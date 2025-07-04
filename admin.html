@@ -39,7 +39,7 @@
         .nameLink:hover {
             text-decoration: underline;
         }
-        #resetStorage {
+        #resetData, #downloadCSV {
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
@@ -47,9 +47,9 @@
             color: white;
             border: none;
             border-radius: 5px;
-            margin-top: 20px;
+            margin: 10px;
         }
-        #resetStorage:hover {
+        #resetData:hover, #downloadCSV:hover {
             background-color: #45a049;
         }
         #backLink {
@@ -100,6 +100,7 @@
 </head>
 <body>
     <h1>Panel de Administración</h1>
+    <input type="file" id="uploadCSV" accept=".csv">
     <h2>Usuarios</h2>
     <table id="userTable">
         <thead>
@@ -120,7 +121,8 @@
         </thead>
         <tbody id="failedTableBody"></tbody>
     </table>
-    <button id="resetStorage" onclick="resetStorage()">Resetear Datos</button>
+    <button id="downloadCSV" onclick="downloadCSV()">Descargar Datos como CSV</button>
+    <button id="resetData" onclick="resetData()">Resetear Datos</button>
     <br>
     <a id="backLink" href="index.html">Volver al Examen</a>
 
@@ -146,6 +148,8 @@
             { text: '¿Por qué el cobre (Cu, Z=29) tiene una configuración anómala?', type: 'open', correct: '[Ar] 4s¹ 3d¹⁰, porque un subnivel 3d lleno es más estable.' }
         ];
 
+        let users = [];
+
         // Función para comparar respuestas abiertas
         function compareAnswers(userAnswer, correctAnswer) {
             if (!userAnswer) return { score: 0, status: 'Incorrecto' };
@@ -162,8 +166,30 @@
             return { score: 0, status: 'Incorrecto' };
         }
 
+        // Función para cargar usuarios desde CSV
+        function loadUsersFromCSV(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
+                const headers = lines[0];
+                users = lines.slice(1).map(row => {
+                    const user = { answers: {} };
+                    headers.forEach((header, index) => {
+                        if (header === 'Nombre') user.name = row[index];
+                        else if (header === 'Puntuacion') user.score = parseInt(row[index]) || 0;
+                        else if (header === 'Estado') user.failed = row[index] === 'Reprobado';
+                        else if (header.startsWith('q')) user.answers[header] = row[index];
+                    });
+                    return user;
+                }).filter(user => user.name); // Filtrar filas vacías
+                loadUsers();
+            };
+            reader.readAsText(file);
+        }
+
+        // Función para cargar usuarios en las tablas
         function loadUsers() {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
             const userTableBody = document.getElementById('userTableBody');
             const failedTableBody = document.getElementById('failedTableBody');
             userTableBody.innerHTML = '';
@@ -182,8 +208,8 @@
             });
         }
 
+        // Función para mostrar respuestas de un usuario
         function showUserAnswers(name) {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
             const user = users.find(u => u.name === name);
             if (!user) return;
 
@@ -207,6 +233,12 @@
                     isCorrect = result.status === 'Correcto';
                     status = result.status;
                 }
+                // Para usuarios reprobados, ajustar el estado
+                if (user.failed && isCorrect) {
+                    status = 'Incorrecto (Correcto)';
+                } else if (user.failed && !isCorrect) {
+                    status = 'Incorrecto';
+                }
                 let answerText = userAnswer;
                 let correctAnswerText = q.correct;
                 if (q.type === 'mc' && userAnswer) {
@@ -221,7 +253,7 @@
                     <p>${q.text}</p>
                     <p><strong>Respuesta:</strong> ${answerText}</p>
                     <p><strong>Respuesta Correcta:</strong> ${correctAnswerText}</p>
-                    <p><strong>Estado:</strong> <span class="${isCorrect ? 'correct' : 'incorrect'}">${status}</span></p>
+                    <p><strong>Estado:</strong> <span class="${status.includes('Correcto') ? 'correct' : 'incorrect'}">${status}</span></p>
                 `;
                 modalAnswers.appendChild(questionDiv);
             });
@@ -229,17 +261,57 @@
             modal.style.display = 'flex';
         }
 
+        // Función para cerrar el modal
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
 
-        function resetStorage() {
-            if (confirm('¿Estás seguro de que quieres resetear todos los datos, incluidas las respuestas del examen?')) {
-                localStorage.clear();
+        // Función para descargar datos como CSV
+        function downloadCSV() {
+            if (!users.length) {
+                alert('No hay datos para descargar.');
+                return;
+            }
+            const headers = ['Nombre', 'Puntuacion', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'Estado'];
+            const rows = users.map(user => [
+                `"${user.name.replace(/"/g, '""')}"`,
+                user.score,
+                ...Object.keys(user.answers).sort().map(key => `"${user.answers[key].replace(/"/g, '""').replace(/\n/g, ' ')}"`),
+                user.failed ? 'Reprobado' : 'Aprobado'
+            ]);
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'examen_datos.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Función para resetear datos
+        function resetData() {
+            if (confirm('¿Estás seguro de que quieres resetear todos los datos cargados?')) {
+                users = [];
                 loadUsers();
+                document.getElementById('uploadCSV').value = '';
             }
         }
 
+        // Evento para cargar CSV
+        document.getElementById('uploadCSV').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                loadUsersFromCSV(e.target.files[0]);
+            }
+        });
+
+        // Cargar usuarios al iniciar (vacío inicialmente)
         loadUsers();
     </script>
 </body>
