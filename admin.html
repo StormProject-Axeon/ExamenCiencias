@@ -207,12 +207,6 @@
                     isCorrect = result.status === 'Correcto';
                     status = result.status;
                 }
-                // Para usuarios reprobados, ajustar el estado
-                if (user.failed && isCorrect) {
-                    status = 'Incorrecto (Correcto)';
-                } else if (user.failed && !isCorrect) {
-                    status = 'Incorrecto';
-                }
                 let answerText = userAnswer;
                 let correctAnswerText = q.correct;
                 if (q.type === 'mc' && userAnswer) {
@@ -227,7 +221,7 @@
                     <p>${q.text}</p>
                     <p><strong>Respuesta:</strong> ${answerText}</p>
                     <p><strong>Respuesta Correcta:</strong> ${correctAnswerText}</p>
-                    <p><strong>Estado:</strong> <span class="${status.includes('Correcto') ? 'correct' : 'incorrect'}">${status}</span></p>
+                    <p><strong>Estado:</strong> <span class="${isCorrect ? 'correct' : 'incorrect'}">${status}</span></p>
                 `;
                 modalAnswers.appendChild(questionDiv);
             });
