@@ -39,7 +39,7 @@
         .nameLink:hover {
             text-decoration: underline;
         }
-        #resetData, #downloadCSV {
+        #downloadCSV, #resetData {
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
@@ -49,7 +49,7 @@
             border-radius: 5px;
             margin: 10px;
         }
-        #resetData:hover, #downloadCSV:hover {
+        #downloadCSV:hover, #resetData:hover {
             background-color: #45a049;
         }
         #backLink {
@@ -100,7 +100,6 @@
 </head>
 <body>
     <h1>Panel de Administración</h1>
-    <input type="file" id="uploadCSV" accept=".csv">
     <h2>Usuarios</h2>
     <table id="userTable">
         <thead>
@@ -121,7 +120,7 @@
         </thead>
         <tbody id="failedTableBody"></tbody>
     </table>
-    <button id="downloadCSV" onclick="downloadCSV()">Descargar Datos como CSV</button>
+    <button id="downloadCSV" onclick="downloadCSV()">Descargar Base de Datos</button>
     <button id="resetData" onclick="resetData()">Resetear Datos</button>
     <br>
     <a id="backLink" href="index.html">Volver al Examen</a>
@@ -166,29 +165,7 @@
             return { score: 0, status: 'Incorrecto' };
         }
 
-        // Función para cargar usuarios desde CSV
-        function loadUsersFromCSV(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
-                const headers = lines[0];
-                users = lines.slice(1).map(row => {
-                    const user = { answers: {} };
-                    headers.forEach((header, index) => {
-                        if (header === 'Nombre') user.name = row[index];
-                        else if (header === 'Puntuacion') user.score = parseInt(row[index]) || 0;
-                        else if (header === 'Estado') user.failed = row[index] === 'Reprobado';
-                        else if (header.startsWith('q')) user.answers[header] = row[index];
-                    });
-                    return user;
-                }).filter(user => user.name); // Filtrar filas vacías
-                loadUsers();
-            };
-            reader.readAsText(file);
-        }
-
-        // Función para cargar usuarios en las tablas
+        // Función para cargar usuarios desde examen_datos.csv
         function loadUsers() {
             const userTableBody = document.getElementById('userTableBody');
             const failedTableBody = document.getElementById('failedTableBody');
@@ -266,7 +243,7 @@
             document.getElementById('modal').style.display = 'none';
         }
 
-        // Función para descargar datos como CSV
+        // Función para descargar la base de datos como CSV
         function downloadCSV() {
             if (!users.length) {
                 alert('No hay datos para descargar.');
@@ -300,19 +277,38 @@
             if (confirm('¿Estás seguro de que quieres resetear todos los datos cargados?')) {
                 users = [];
                 loadUsers();
-                document.getElementById('uploadCSV').value = '';
             }
         }
 
-        // Evento para cargar CSV
-        document.getElementById('uploadCSV').addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                loadUsersFromCSV(e.target.files[0]);
-            }
-        });
-
-        // Cargar usuarios al iniciar (vacío inicialmente)
-        loadUsers();
+        // Cargar usuarios al iniciar (intentar cargar examen_datos.csv)
+        fetch('examen_datos.csv')
+            .then(response => {
+                if (!response.ok) {
+                    console.error('No se encontró examen_datos.csv');
+                    return '';
+                }
+                return response.text();
+            })
+            .then(text => {
+                if (text) {
+                    const lines = text.split('\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
+                    const headers = lines[0];
+                    users = lines.slice(1).map(row => {
+                        const user = { answers: {} };
+                        headers.forEach((header, index) => {
+                            if (header === 'Nombre') user.name = row[index];
+                            else if (header === 'Puntuacion') user.score = parseInt(row[index]) || 0;
+                            else if (header === 'Estado') user.failed = row[index] === 'Reprobado';
+                            else if (header.startsWith('q')) user.answers[header] = row[index];
+                        });
+                        return user;
+                    }).filter(user => user.name); // Filtrar filas vacías
+                    loadUsers();
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar examen_datos.csv:', error);
+            });
     </script>
 </body>
 </html>
