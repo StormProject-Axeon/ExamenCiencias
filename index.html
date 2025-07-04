@@ -28,7 +28,7 @@
             font-size: 1em;
             margin-right: 10px;
         }
-        #submitName, #submitExam, #resetStorage {
+        #submitName, #submitExam {
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
@@ -37,7 +37,7 @@
             border: none;
             border-radius: 5px;
         }
-        #submitName:hover, #submitExam:hover, #resetStorage:hover {
+        #submitName:hover, #submitExam:hover {
             background-color: #45a049;
         }
         #panel {
@@ -45,16 +45,6 @@
             padding: 10px;
             border: 1px solid #ccc;
             display: inline-block;
-        }
-        #adminLink {
-            margin-top: 20px;
-            display: inline-block;
-            text-decoration: none;
-            color: #4CAF50;
-            font-size: 1em;
-        }
-        #adminLink:hover {
-            text-decoration: underline;
         }
         .question {
             text-align: left;
@@ -161,8 +151,6 @@
         </div>
 
         <button id="submitExam" onclick="submitExam()">Enviar Examen</button>
-        <br>
-        <a id="adminLink" href="admin.html">Ir al Panel de Administración</a>
     </div>
 
     <!-- Pantalla de resultado -->
@@ -172,9 +160,6 @@
             <p>Nombre: <span id="resultName"></span></p>
             <p>Puntuación: <span id="resultScore"></span></p>
         </div>
-        <button id="resetStorage" onclick="resetStorage()">Resetear Examen</button>
-        <br>
-        <a id="adminLink" href="admin.html">Ir al Panel de Administración</a>
     </div>
 
     <audio id="alertSound" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
@@ -386,13 +371,6 @@
                 alert('Te has salido del sitio web, ya no puedes seguir haciendo el examen por andar siendo el inteligente, y pura AI lo haces :v mal ahí');
                 endExam();
                 window.focus();
-            }
-        }
-
-        function resetStorage() {
-            if (confirm('¿Estás seguro de que quieres resetear todos los datos, incluidas las respuestas del examen?')) {
-                localStorage.clear();
-                location.reload();
             }
         }
 
