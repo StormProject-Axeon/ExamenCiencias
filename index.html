@@ -193,11 +193,18 @@
             q10: '[Ar] 4s¹ 3d¹⁰, porque un subnivel 3d lleno es más estable.'
         };
 
+        // Opciones para preguntas de selección múltiple
+        const questionOptions = {
+            q4: { a: '1s² 2s² 2p¹', b: '1s² 2s² 2p²', c: '1s² 2s¹ 2p³', d: '1s² 2s² 2p³' },
+            q5: { a: 'Aufbau', b: 'Hund', c: 'Pauli', d: 'Incertidumbre' },
+            q6: { a: 'Subnivel 4s lleno', b: 'Subnivel 3d semi-lleno más estable', c: 'Distribución aleatoria', d: 'No sigue Aufbau' }
+        };
+
         // Función para comparar respuestas abiertas
         function compareAnswers(userAnswer, correctAnswer) {
             if (!userAnswer) return { score: 0, status: 'Incorrecto' };
             const normalize = str => str.toLowerCase()
-                .replace(/[¹²³⁴⁵⁶⁷⁸perspective: 9⁰]/g, m => '1234567890'['¹²³⁴⁵⁶⁷⁸⁹⁰'.indexOf(m)])
+                .replace(/[¹²³⁴⁵⁶⁷⁸⁹⁰]/g, m => '1234567890'['¹²³⁴⁵⁶⁷⁸⁹⁰'.indexOf(m)])
                 .replace(/[\[\]]/g, '') // Quitar corchetes
                 .replace(/\s+/g, ' ')
                 .trim();
@@ -209,38 +216,46 @@
             return { score: 0, status: 'Incorrecto' };
         }
 
-        // Verificar si el usuario ya reprobó
-        function checkUserStatus(name) {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const user = users.find(u => u.name === name);
-            return user && user.failed;
+        // Función para formatear respuestas para CSV
+        function formatAnswerForCSV(questionIndex, answer) {
+            const q = `q${questionIndex + 1}`;
+            if (['q1', 'q2', 'q3'].includes(q)) {
+                return answer === 'true' ? 'Verdadero' : answer === 'false' ? 'Falso' : 'Sin respuesta';
+            } else if (['q4', 'q5', 'q6'].includes(q) && answer && questionOptions[q][answer]) {
+                return `${answer}) ${questionOptions[q][answer]}`;
+            }
+            return answer.replace(/"/g, '""').replace(/\n/g, ' '); // Escapar comillas y reemplazar saltos de línea
         }
 
-        // Al cargar la página, verificar estado
-        const savedName = localStorage.getItem('userName');
-        if (savedName && checkUserStatus(savedName)) {
-            showResultScreen(false);
-        } else {
-            nameScreen.style.display = 'block';
+        // Función para generar y descargar CSV
+        function downloadCSV(name, score, answers, failed) {
+            const headers = ['Nombre', 'Puntuacion', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'Estado'];
+            const estado = failed ? 'Reprobado' : 'Aprobado';
+            const row = [
+                `"${name.replace(/"/g, '""')}"`,
+                score,
+                ...Object.values(answers).map((answer, index) => `"${formatAnswerForCSV(index, answer)}"`),
+                estado
+            ];
+            const csvContent = [
+                headers.join(','),
+                row.join(',')
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `examen_${name}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         function submitName() {
             const nameInput = document.getElementById('nameInput').value.trim();
             if (nameInput) {
-                if (checkUserStatus(nameInput)) {
-                    localStorage.setItem('userName', nameInput);
-                    showResultScreen(false);
-                    return;
-                }
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                let user = users.find(u => u.name === nameInput);
-                if (!user) {
-                    user = { name: nameInput, score: 0, answers: {}, failed: false };
-                    users.push(user);
-                    localStorage.setItem('users', JSON.stringify(users));
-                }
-                localStorage.setItem('userName', nameInput);
-                localStorage.setItem('userScore', '0');
                 userNameDisplay.textContent = nameInput;
                 userScoreDisplay.textContent = '0';
                 nameScreen.style.display = 'none';
@@ -294,49 +309,34 @@
                 score += compareAnswers(answers[key], correctAnswers[key]).score;
             }
 
-            // Guardar datos
-            const name = localStorage.getItem('userName');
-            localStorage.setItem('userScore', score);
-            updateUserData(name, score, answers, score < 6); // Considerar reprobado si score < 6
-            localStorage.removeItem('examFailed');
+            // Guardar datos en CSV
+            const name = userNameDisplay.textContent;
+            const failed = score < 6;
+            downloadCSV(name, score, answers, failed);
 
             showResultScreen(true, auto);
-        }
-
-        function updateUserData(name, score, answers, failed) {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const userIndex = users.findIndex(user => user.name === name);
-            if (userIndex !== -1) {
-                users[userIndex].score = score;
-                users[userIndex].answers = answers;
-                users[userIndex].failed = failed;
-            } else {
-                users.push({ name, score, answers, failed });
-            }
- 업데이트UserData(name, score, answers, failed);
-            localStorage.setItem('users', JSON.stringify(users));
+            resultNameDisplay.textContent = name;
+            resultScoreDisplay.textContent = score;
         }
 
         function showResultScreen(success, expired = false) {
             examScreen.style.display = 'none';
             resultScreen.style.display = 'block';
-            const name = localStorage.getItem('userName');
-            const score = localStorage.getItem('userScore') || '0';
+            const name = userNameDisplay.textContent;
+            const score = resultScoreDisplay.textContent || '0';
             resultNameDisplay.textContent = name;
             resultScoreDisplay.textContent = score;
             if (success) {
                 resultMessage.textContent = expired ? 'Examen Expirado' : '¡Examen Completado!';
             } else {
                 resultMessage.textContent = 'Examen Reprobado';
-                localStorage.setItem('examFailed', 'true');
             }
         }
 
         function endExam() {
             clearInterval(countdown);
             isTimerRunning = false;
-            const name = localStorage.getItem('userName');
-            // Recolectar respuestas parciales antes de fallar
+            const name = userNameDisplay.textContent;
             const answers = {};
             for (let i = 1; i <= 6; i++) {
                 const selected = document.querySelector(`input[name="q${i}"]:checked`);
@@ -345,9 +345,7 @@
             for (let i = 7; i <= 10; i++) {
                 answers[`q${i}`] = document.getElementById(`q${i}`).value.trim();
             }
-            localStorage.setItem('userScore', '0');
-            updateUserData(name, 0, answers, true);
-            localStorage.setItem('examFailed', 'true');
+            downloadCSV(name, 0, answers, true);
             showResultScreen(false);
             window.removeEventListener('beforeunload', beforeUnloadHandler);
             document.removeEventListener('visibilitychange', visibilityChangeHandler);
@@ -376,6 +374,9 @@
                 window.focus();
             }
         }
+
+        // Mostrar pantalla de ingreso de nombre al cargar
+        nameScreen.style.display = 'block';
 
         setTimeout(() => {
             if (isTimerRunning) {
