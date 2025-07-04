@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen de Configuración Electrónica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        #nameScreen, #examScreen, #resultScreen {
+            display: none;
+        }
+        #warning {
+            color: red;
+            font-size: 1.2em;
+            display: none;
+            margin-top: 20px;
+        }
+        #nameScreen {
+            margin-top: 100px;
+        }
+        #nameInput {
+            padding: 10px;
+            font-size: 1em;
+            margin-right: 10px;
+        }
+        #submitName, #submitExam, #resetStorage {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #submitName:hover, #submitExam:hover, #resetStorage:hover {
+            background-color: #45a049;
+        }
+        #panel {
+            margin: 20px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+        #adminLink {
+            margin-top: 20px;
+            display: inline-block;
+            text-decoration: none;
+            color: #4CAF50;
+            font-size: 1em;
+        }
+        #adminLink:hover {
+            text-decoration: underline;
+        }
+        .question {
+            text-align: left;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .question label {
+            margin-left: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 60px;
+            margin-top: 10px;
+        }
+        h1, h2, p {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de ingreso de nombre -->
+    <div id="nameScreen">
+        <h1>Ingresar Nombre</h1>
+        <input type="text" id="nameInput" placeholder="Nombre" required>
+        <button id="submitName" onclick="submitName()">Enviar</button>
+    </div>
+
+    <!-- Pantalla del examen -->
+    <div id="examScreen">
+        <h1>Examen de Configuración Electrónica</h1>
+        <div id="panel">
+            <p>Nombre: <span id="userName"></span></p>
+            <p>Puntuación: <span id="userScore">0</span></p>
+        </div>
+        <p>Tiempo restante: <span id="timer">300</span> segundos</p>
+        <p id="warning">¡No cambies de pestaña ni salgas de la página!</p>
+
+        <!-- Preguntas de Verdadero o Falso -->
+        <div class="question">
+            <h2>Pregunta 1: Verdadero o Falso</h2>
+            <p>El principio de Aufbau indica que los electrones ocupan primero los orbitales de mayor energía.</p>
+            <label><input type="radio" name="q1" value="true"> Verdadero</label><br>
+            <label><input type="radio" name="q1" value="false"> Falso</label>
+        </div>
+        <div class="question">
+            <h2>Pregunta 2: Verdadero o Falso</h2>
+            <p>La configuración del ion Na⁺ es igual a la del neón.</p>
+            <label><input type="radio" name="q2" value="true"> Verdadero</label><br>
+            <label><input type="radio" name="q2" value="false"> Falso</label>
+        </div>
+        <div class="question">
+            <h2>Pregunta 3: Verdadero o Falso</h2>
+            <p>Los subniveles d contienen hasta 12 electrones.</p>
+            <label><input type="radio" name="q3" value="true"> Verdadero</label><br>
+            <label><input type="radio" name="q3" value="false"> Falso</label>
+        </div>
+
+        <!-- Preguntas de Selección Múltiple -->
+        <div class="question">
+            <h2>Pregunta 4: Selección Múltiple</h2>
+            <p>¿Configuración electrónica del carbono (C, Z=6)?</p>
+            <label><input type="radio" name="q4" value="a"> a) 1s² 2s² 2p¹</label><br>
+            <label><input type="radio" name="q4" value="b"> b) 1s² 2s² 2p²</label><br>
+            <label><input type="radio" name="q4" value="c"> c) 1s² 2s¹ 2p³</label><br>
+            <label><input type="radio" name="q4" value="d"> d) 1s² 2s² 2p³</label>
+        </div>
+        <div class="question">
+            <h2>Pregunta 5: Selección Múltiple</h2>
+            <p>¿Qué principio limita a dos electrones por orbital con espines opuestos?</p>
+            <label><input type="radio" name="q5" value="a"> a) Aufbau</label><br>
+            <label><input type="radio" name="q5" value="b"> b) Hund</label><br>
+            <label><input type="radio" name="q5" value="c"> c) Pauli</label><br>
+            <label><input type="radio" name="q5" value="d"> d) Incertidumbre</label>
+        </div>
+        <div class="question">
+            <h2>Pregunta 6: Selección Múltiple</h2>
+            <p>¿Por qué el cromo (Cr, Z=24) tiene una configuración anómala?</p>
+            <label><input type="radio" name="q6" value="a"> a) Subnivel 4s lleno</label><br>
+            <label><input type="radio" name="q6" value="b"> b) Subnivel 3d semi-lleno más estable</label><br>
+            <label><input type="radio" name="q6" value="c"> c) Distribución aleatoria</label><br>
+            <label><input type="radio" name="q6" value="d"> d) No sigue Aufbau</label>
+        </div>
+
+        <!-- Preguntas de Respuesta Abierta -->
+        <div class="question">
+            <h2>Pregunta 7: Respuesta Abierta</h2>
+            <p>¿Cómo se escribe la configuración abreviada del potasio (K, Z=19)?</p>
+            <textarea id="q7" placeholder="Escribe tu respuesta aquí"></textarea>
+        </div>
+        <div class="question">
+            <h2>Pregunta 8: Respuesta Abierta</h2>
+            <p>¿Qué dice la regla de Hund?</p>
+            <textarea id="q8" placeholder="Escribe tu respuesta aquí"></textarea>
+        </div>
+        <div class="question">
+            <h2>Pregunta 9: Respuesta Abierta</h2>
+            <p>¿Por qué es importante la configuración electrónica en la tabla periódica?</p>
+            <textarea id="q9" placeholder="Escribe tu respuesta aquí"></textarea>
+        </div>
+        <div class="question">
+            <h2>Pregunta 10: Respuesta Abierta</h2>
+            <p>¿Por qué el cobre (Cu, Z=29) tiene una configuración anómala?</p>
+            <textarea id="q10" placeholder="Escribe tu respuesta aquí"></textarea>
+        </div>
+
+        <button id="submitExam" onclick="submitExam()">Enviar Examen</button>
+        <br>
+        <a id="adminLink" href="admin.html">Ir al Panel de Administración</a>
+    </div>
+
+    <!-- Pantalla de resultado -->
+    <div id="resultScreen">
+        <h1 id="resultMessage"></h1>
+        <div id="resultPanel">
+            <p>Nombre: <span id="resultName"></span></p>
+            <p>Puntuación: <span id="resultScore"></span></p>
+        </div>
+        <button id="resetStorage" onclick="resetStorage()">Resetear Examen</button>
+        <br>
+        <a id="adminLink" href="admin.html">Ir al Panel de Administración</a>
+    </div>
+
+    <audio id="alertSound" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
+
+    <script>
+        let timeLeft = 300; // Tiempo en segundos (5 minutos)
+        let isTimerRunning = false;
+        let countdown;
+        const nameScreen = document.getElementById('nameScreen');
+        const examScreen = document.getElementById('examScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const warningMessage = document.getElementById('warning');
+        const alertSound = document.getElementById('alertSound');
+        const userNameDisplay = document.getElementById('userName');
+        const userScoreDisplay = document.getElementById('userScore');
+        const resultNameDisplay = document.getElementById('resultName');
+        const resultScoreDisplay = document.getElementById('resultScore');
+        const resultMessage = document.getElementById('resultMessage');
+
+        // Respuestas correctas para evaluación
+        const correctAnswers = {
+            q1: 'false', // Aufbau: Falso
+            q2: 'true',  // Na⁺ = Neón: Verdadero
+            q3: 'false', // Subniveles d: Falso
+            q4: 'b',     // Carbono: 1s² 2s² 2p²
+            q5: 'c',     // Pauli
+            q6: 'b',     // Cromo: 3d semi-lleno
+            q7: '[Ar] 4s¹',
+            q8: 'Los electrones ocupan orbitales de igual energía individualmente con espines paralelos antes de emparejarse.',
+            q9: 'Organiza los elementos en bloques (s, p, d, f) según los subniveles llenados, explicando propiedades y reactividad.',
+            q10: '[Ar] 4s¹ 3d¹⁰, porque un subnivel 3d lleno es más estable.'
+        };
+
+        // Función para comparar respuestas abiertas
+        function compareAnswers(userAnswer, correctAnswer) {
+            if (!userAnswer) return { score: 0, status: 'Incorrecto' };
+            const normalize = str => str.toLowerCase()
+                .replace(/[¹²³⁴⁵⁶⁷⁸⁹⁰]/g, m => '1234567890'['¹²³⁴⁵⁶⁷⁸⁹⁰'.indexOf(m)])
+                .replace(/[\[\]]/g, '') // Quitar corchetes
+                .replace(/\s+/g, ' ')
+                .trim();
+            const user = normalize(userAnswer);
+            const correct = normalize(correctAnswer);
+            if (user === correct || user.includes(correct.split(',')[0].trim())) {
+                return { score: 1, status: 'Correcto' };
+            }
+            return { score: 0, status: 'Incorrecto' };
+        }
+
+        // Verificar si el usuario ya reprobó
+        function checkUserStatus(name) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.name === name);
+            return user && user.failed;
+        }
+
+        // Al cargar la página, verificar estado
+        const savedName = localStorage.getItem('userName');
+        if (savedName && checkUserStatus(savedName)) {
+            showResultScreen(false);
+        } else {
+            nameScreen.style.display = 'block';
+        }
+
+        function submitName() {
+            const nameInput = document.getElementById('nameInput').value.trim();
+            if (nameInput) {
+                if (checkUserStatus(nameInput)) {
+                    localStorage.setItem('userName', nameInput);
+                    showResultScreen(false);
+                    return;
+                }
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                let user = users.find(u => u.name === nameInput);
+                if (!user) {
+                    user = { name: nameInput, score: 0, answers: {}, failed: false };
+                    users.push(user);
+                }
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('userName', nameInput);
+                localStorage.setItem('userScore', '0');
+                userNameDisplay.textContent = nameInput;
+                userScoreDisplay.textContent = '0';
+                nameScreen.style.display = 'none';
+                examScreen.style.display = 'block';
+                startTimer();
+            } else {
+                alert('Por favor, ingresa un nombre válido.');
+            }
+        }
+
+        function startTimer() {
+            if (!isTimerRunning) {
+                isTimerRunning = true;
+                const timerDisplay = document.getElementById('timer');
+                countdown = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        submitExam(true);
+                    }
+                }, 1000);
+                window.addEventListener('beforeunload', beforeUnloadHandler);
+                document.addEventListener('visibilitychange', visibilityChangeHandler);
+            }
+        }
+
+        function submitExam(auto = false) {
+            if (!isTimerRunning && !auto) return;
+            clearInterval(countdown);
+            isTimerRunning = false;
+            warningMessage.style.display = 'none';
+
+            // Recolectar respuestas
+            const answers = {};
+            for (let i = 1; i <= 6; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                answers[`q${i}`] = selected ? selected.value : '';
+            }
+            for (let i = 7; i <= 10; i++) {
+                answers[`q${i}`] = document.getElementById(`q${i}`).value.trim();
+            }
+
+            // Calcular puntuación
+            let score = 0;
+            for (let i = 1; i <= 6; i++) {
+                const key = `q${i}`;
+                if (answers[key] === correctAnswers[key]) score++;
+            }
+            for (let i = 7; i <= 10; i++) {
+                const key = `q${i}`;
+                score += compareAnswers(answers[key], correctAnswers[key]).score;
+            }
+
+            // Guardar datos
+            const name = localStorage.getItem('userName');
+            localStorage.setItem('userScore', score);
+            updateUserData(name, score, answers, false);
+            localStorage.removeItem('examFailed');
+
+            showResultScreen(true, auto);
+        }
+
+        function updateUserData(name, score, answers, failed) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const userIndex = users.findIndex(user => user.name === name);
+            if (userIndex !== -1) {
+                users[userIndex].score = score;
+                users[userIndex].answers = answers;
+                users[userIndex].failed = failed;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+
+        function showResultScreen(success, expired = false) {
+            examScreen.style.display = 'none';
+            resultScreen.style.display = 'block';
+            const name = localStorage.getItem('userName');
+            const score = localStorage.getItem('userScore') || '0';
+            resultNameDisplay.textContent = name;
+            resultScoreDisplay.textContent = score;
+            if (success) {
+                resultMessage.textContent = expired ? 'Examen Expirado' : '¡Examen Completado!';
+            } else {
+                resultMessage.textContent = 'Examen Reprobado';
+                localStorage.setItem('examFailed', 'true');
+            }
+        }
+
+        function endExam() {
+            clearInterval(countdown);
+            isTimerRunning = false;
+            const name = localStorage.getItem('userName');
+            // Recolectar respuestas parciales antes de fallar
+            const answers = {};
+            for (let i = 1; i <= 6; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                answers[`q${i}`] = selected ? selected.value : '';
+            }
+            for (let i = 7; i <= 10; i++) {
+                answers[`q${i}`] = document.getElementById(`q${i}`).value.trim();
+            }
+            localStorage.setItem('userScore', '0');
+            updateUserData(name, 0, answers, true);
+            localStorage.setItem('examFailed', 'true');
+            showResultScreen(false);
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+            document.removeEventListener('visibilitychange', visibilityChangeHandler);
+        }
+
+        function beforeUnloadHandler(e) {
+            if (isTimerRunning) {
+                alertSound.play().catch(error => {
+                    console.error('Error al reproducir el sonido:', error);
+                });
+                alert('Te has salido del sitio web, ya no puedes seguir haciendo el examen por andar siendo el inteligente, y pura AI lo haces :v mal ahí');
+                endExam();
+                e.preventDefault();
+                e.returnValue = '¡Aún no ha terminado el tiempo! ¿Seguro que quieres salir?';
+                return e.returnValue;
+            }
+        }
+
+        function visibilityChangeHandler() {
+            if (isTimerRunning && document.hidden) {
+                alertSound.play().catch(error => {
+                    console.error('Error al reproducir el sonido:', error);
+                });
+                alert('Te has salido del sitio web, ya no puedes seguir haciendo el examen por andar siendo el inteligente, y pura AI lo haces :v mal ahí');
+                endExam();
+                window.focus();
+            }
+        }
+
+        function resetStorage() {
+            if (confirm('¿Estás seguro de que quieres resetear todos los datos, incluidas las respuestas del examen?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        setTimeout(() => {
+            if (isTimerRunning) {
+                window.removeEventListener('beforeunload', beforeUnloadHandler);
+                document.removeEventListener('visibilitychange', visibilityChangeHandler);
+                warningMessage.style.display = 'none';
+            }
+        }, timeLeft * 1000);
+    </script>
+</body>
+</html>
