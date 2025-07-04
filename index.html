@@ -200,6 +200,9 @@
             q6: { a: 'Subnivel 4s lleno', b: 'Subnivel 3d semi-lleno más estable', c: 'Distribución aleatoria', d: 'No sigue Aufbau' }
         };
 
+        // Arreglo para almacenar usuarios en memoria
+        let users = [];
+
         // Función para comparar respuestas abiertas
         function compareAnswers(userAnswer, correctAnswer) {
             if (!userAnswer) return { score: 0, status: 'Incorrecto' };
@@ -227,26 +230,38 @@
             return answer.replace(/"/g, '""').replace(/\n/g, ' '); // Escapar comillas y reemplazar saltos de línea
         }
 
-        // Función para generar y descargar CSV
-        function downloadCSV(name, score, answers, failed) {
+        // Función para añadir usuario al CSV
+        function saveToCSV(name, score, answers, failed) {
             const headers = ['Nombre', 'Puntuacion', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'Estado'];
             const estado = failed ? 'Reprobado' : 'Aprobado';
+            const newUser = {
+                name,
+                score,
+                answers,
+                failed
+            };
+            users.push(newUser);
             const row = [
                 `"${name.replace(/"/g, '""')}"`,
                 score,
                 ...Object.values(answers).map((answer, index) => `"${formatAnswerForCSV(index, answer)}"`),
                 estado
             ];
+            // Generar CSV con todos los usuarios
             const csvContent = [
                 headers.join(','),
-                row.join(',')
+                ...users.map(u => [
+                    `"${u.name.replace(/"/g, '""')}"`,
+                    u.score,
+                    ...Object.values(u.answers).map((answer, index) => `"${formatAnswerForCSV(index, answer)}"`),
+                    u.failed ? 'Reprobado' : 'Aprobado'
+                ]).join('\n')
             ].join('\n');
-            
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `examen_${name}.csv`);
+            link.setAttribute('download', 'examen_datos.csv');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -312,7 +327,7 @@
             // Guardar datos en CSV
             const name = userNameDisplay.textContent;
             const failed = score < 6;
-            downloadCSV(name, score, answers, failed);
+            saveToCSV(name, score, answers, failed);
 
             showResultScreen(true, auto);
             resultNameDisplay.textContent = name;
@@ -345,7 +360,7 @@
             for (let i = 7; i <= 10; i++) {
                 answers[`q${i}`] = document.getElementById(`q${i}`).value.trim();
             }
-            downloadCSV(name, 0, answers, true);
+            saveToCSV(name, 0, answers, true);
             showResultScreen(false);
             window.removeEventListener('beforeunload', beforeUnloadHandler);
             document.removeEventListener('visibilitychange', visibilityChangeHandler);
