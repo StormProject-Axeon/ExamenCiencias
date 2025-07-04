@@ -39,7 +39,7 @@
         .nameLink:hover {
             text-decoration: underline;
         }
-        #downloadCSV, #resetData {
+        #uploadCSV, #downloadCSV, #resetData {
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
@@ -49,7 +49,7 @@
             border-radius: 5px;
             margin: 10px;
         }
-        #downloadCSV:hover, #resetData:hover {
+        #uploadCSV:hover, #downloadCSV:hover, #resetData:hover {
             background-color: #45a049;
         }
         #backLink {
@@ -100,6 +100,7 @@
 </head>
 <body>
     <h1>Panel de Administración</h1>
+    <input type="file" id="uploadCSV" accept=".csv">
     <h2>Usuarios</h2>
     <table id="userTable">
         <thead>
@@ -165,7 +166,24 @@
             return { score: 0, status: 'Incorrecto' };
         }
 
-        // Función para cargar usuarios desde examen_datos.csv
+        // Función para cargar usuarios desde CSV
+        function loadUsersFromCSV(text) {
+            const lines = text.split('\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
+            const headers = lines[0];
+            users = lines.slice(1).map(row => {
+                const user = { answers: {} };
+                headers.forEach((header, index) => {
+                    if (header === 'Nombre') user.name = row[index];
+                    else if (header === 'Puntuacion') user.score = parseInt(row[index]) || 0;
+                    else if (header === 'Estado') user.failed = row[index] === 'Reprobado';
+                    else if (header.startsWith('q')) user.answers[header] = row[index];
+                });
+                return user;
+            }).filter(user => user.name); // Filtrar filas vacías
+            loadUsers();
+        }
+
+        // Función para cargar usuarios en las tablas
         function loadUsers() {
             const userTableBody = document.getElementById('userTableBody');
             const failedTableBody = document.getElementById('failedTableBody');
@@ -277,10 +295,22 @@
             if (confirm('¿Estás seguro de que quieres resetear todos los datos cargados?')) {
                 users = [];
                 loadUsers();
+                document.getElementById('uploadCSV').value = '';
             }
         }
 
-        // Cargar usuarios al iniciar (intentar cargar examen_datos.csv)
+        // Evento para cargar CSV manualmente
+        document.getElementById('uploadCSV').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    loadUsersFromCSV(e.target.result);
+                };
+                reader.readAsText(e.target.files[0]);
+            }
+        });
+
+        // Intentar cargar examen_datos.csv al iniciar
         fetch('examen_datos.csv')
             .then(response => {
                 if (!response.ok) {
@@ -291,19 +321,7 @@
             })
             .then(text => {
                 if (text) {
-                    const lines = text.split('\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
-                    const headers = lines[0];
-                    users = lines.slice(1).map(row => {
-                        const user = { answers: {} };
-                        headers.forEach((header, index) => {
-                            if (header === 'Nombre') user.name = row[index];
-                            else if (header === 'Puntuacion') user.score = parseInt(row[index]) || 0;
-                            else if (header === 'Estado') user.failed = row[index] === 'Reprobado';
-                            else if (header.startsWith('q')) user.answers[header] = row[index];
-                        });
-                        return user;
-                    }).filter(user => user.name); // Filtrar filas vacías
-                    loadUsers();
+                    loadUsersFromCSV(text);
                 }
             })
             .catch(error => {
